@@ -1,0 +1,256 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Windows.Forms;
+using System.Media;
+
+namespace Seminarska
+{
+    public partial class Form1 : Form
+    {
+        Timer timer;
+        Ball ball;
+        Graphics graphics;
+        Brush brush;
+        Pen pen;
+        Rectangle bounds;
+        Bitmap doubleBuffer;
+        static readonly int FRAMES_PER_SECOND = 30;
+        Boolean brt=false;
+        pin[] niza = new pin[10];
+        Image img;
+        Image pinimg;
+        Image osnova;
+        bool crtaj = true;
+        double agol;
+       int brojac=0;
+        public Form1()
+        {
+            InitializeComponent();
+            this.FormBorderStyle = FormBorderStyle.FixedSingle;
+     
+            startgame();
+            Invalidate(); 
+        }
+        public void startgame() {
+
+            bounds = new Rectangle(10, 10, this.Bounds.Width - 40, this.Bounds.Height - 60);
+          //  osnova = Image.FromFile(@"C:\\Users\\bojana\\Desktop\\Kuglanje\\pozadin.png");
+            img = Image.FromFile(@"C:\\Users\\bojana\\Desktop\\Kuglanje\\bowling.jpg");
+            pinimg = Image.FromFile(@"C:\\Users\\bojana\\Desktop\\Kuglanje\\pin.png");
+            doubleBuffer = new Bitmap(img);
+            
+            graphics = CreateGraphics();
+            ball = new Ball(168, 389, 35, 25, (float)(Math.PI/4));
+            if (crtaj)
+            {
+                int j = 0;
+                for (int i = 0; i < 50; i += 15)
+                {
+                    niza[j] = new pin(215 + i, 110);
+                    j++;
+                }
+                for (int i = 0; i <= 30; i += 15)
+                {
+                    niza[j] = new pin(222 + i, 120);
+                    j++;
+                }
+                for (int i = 0; i <= 15; i += 15)
+                {
+                    niza[j] = new pin(229 + i, 130);
+                    j++;
+                }
+                niza[j] = new pin(236, 140);
+            }
+            ball.Bounds = bounds;
+            Show();
+            brush = new SolidBrush(Color.Blue);
+            pen = new Pen(Color.Red);
+            timer = new Timer();
+            timer.Tick += new EventHandler(timer_Tick);
+            timer.Interval = 1000 / FRAMES_PER_SECOND;
+            
+        }
+       public void timer_Tick(object sender, EventArgs e)
+        {
+           player_one_label.Visible = true;
+           poeni_prv.Visible = true;
+           player_two_label.Visible = true;
+           poeni_vtor.Visible = true;
+
+           Graphics g = Graphics.FromImage(doubleBuffer);
+            g.Clear(Color.White);
+            g.DrawImage(img, 0, 0, Width, Height);
+            label6.ForeColor = Color.Transparent;
+           pindraws(g);
+            if (!brt)
+            {
+                ball.Move1();
+                if (topche1.Checked == true)
+                {
+                    ball.Draw(brush, g, 1);
+                }
+                else
+                {
+                    ball.Draw(brush, g, 2);
+                }
+
+            }
+           
+            if (brt)
+            {
+              
+                
+                if (ball.Y > 85)
+                {
+                    ball.Move2(agol);
+                    if (topche1.Checked == true)
+
+                        ball.Draw(brush, g, 1);
+                    else
+                        ball.Draw(brush, g, 2);
+                }
+                else if (ball.Y<=85) {
+                    timer.Stop();
+                    for (int j = 0; j < 10; j++)
+                    {
+                        if (niza[j].visible == false)
+                            brojac++;
+                       
+                    }
+
+                    poeni_prv.Text =brojac.ToString();
+                    brojac = 0;
+                    
+                }
+            }
+          
+          
+            
+           
+            graphics.DrawImageUnscaled(doubleBuffer, 0, 0);
+           
+        }
+
+        
+      public void Form1_MouseClick(object sender, MouseEventArgs e)
+      {
+          brt = true;
+          agol = Math.Acos((ball.X - 239) / ((-40) - ball.Y));
+      }
+
+      public void pindraws(Graphics g) {
+             
+
+            for (int i = 0; i <10; i++)
+            {
+                if ((niza[i].xcord + 15 >= ball.X - ball.radius && niza[i].xcord < ball.X + ball.radius) && (niza[i].ycord > ball.Y + ball.radius))
+                {
+                    niza[i].visible = false;
+                    
+                    //SoundPlayer simpleSound = new SoundPlayer("http://cd.textfiles.com/10000soundssongs/WAV/ALARM.WAV");
+                    //simpleSound.Play();
+                }
+                
+                niza[i].DrawPin(pinimg, g);
+              
+          }
+      }
+
+      private void Form1_DoubleClick(object sender, EventArgs e)
+      {
+          if (ball.Y <= 85)
+          {
+              brt = false;
+              crtaj = true;
+              for (int i = 0; i < 10; i++)
+              {
+                  if (niza[i].visible == true)
+                      crtaj = false;
+
+              }
+
+              timer.Start();
+
+              ball = new Ball(168, 389, 35, 25, (float)(Math.PI / 4));
+              startgame();
+          }
+      }
+
+     
+
+     
+
+      private void play_button_Click(object sender, EventArgs e)
+      {
+          
+          play_button.Visible = false;
+          one_player.Visible = false;
+          two_players.Visible = false;
+          topche1.Visible = false;
+          topche2.Visible = false;
+          tophe3.Visible = false;
+          topche1_slika.Visible = false;
+          topche2_slika.Visible = false;
+          topche3_slika.Visible = false;
+          player1.Visible = false;
+          player2.Visible = false;
+          vnesi_prv.Visible = false;
+          vnesi_vtor.Visible = false;
+          if(vnesi_prv.Text == "")
+         
+          player_one_label.Text = "Player1";
+          else
+              player_one_label.Text = vnesi_prv.Text;
+          
+          if(vnesi_vtor.Text == "" && vnesi_vtor.Visible==false)
+              player_two_label.Text = "Computer:";
+          else if (player_one_label.Text == "")
+              player_two_label.Text = "Player 2";
+          else
+          player_two_label.Text = vnesi_prv.Text;
+      
+          
+          timer.Start();
+
+      }
+
+      private void two_players_Click(object sender, EventArgs e)
+      {
+          vnesi_prv.Visible = true;
+          vnesi_vtor.Visible = true;
+          player1.Visible = true;
+          player2.Visible = true;
+
+      }
+
+      private void one_player_Click(object sender, EventArgs e)
+      {
+          vnesi_prv.Visible = true;
+          vnesi_vtor.Visible = false;
+          player1.Visible = true;
+          player2.Visible = false;
+      }
+
+      
+
+    
+     
+
+
+     
+      
+
+   
+
+      
+
+     
+
+      
+    }
+}
